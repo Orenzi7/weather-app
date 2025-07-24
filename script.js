@@ -1,177 +1,153 @@
 const API_KEY = "695061045a0f47a3bca163031252307";
 const BASE_URL = "https://api.weatherapi.com/v1/forecast.json";
-const weatherApp = document.getElementById("weatherApp");
+const form = document.getElementById("search-form");
+const input = document.getElementById("search-input");
+const loader = document.getElementById("loading");
 
-// 🌆 Background themes
-const backgrounds = {
-  sunny: {
-    image: 'url("https://images.unsplash.com/photo-1504253163759-c23fccaebb51?auto=format&fit=crop&w=1200&q=80")',
-    textColor: "#000000",
-  },
-  clear: {
-    image: 'url("https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=1200&q=80")',
-    textColor: "#000000",
-  },
-  cloudy: {
-    image: 'url("https://images.unsplash.com/photo-1503437313881-503a91226419?auto=format&fit=crop&w=1200&q=80")',
-    textColor: "#ffffff",
-  },
-  "partly cloudy": {
-    image: 'url("https://images.unsplash.com/photo-1601132359864-d2c4cfb4c42c?auto=format&fit=crop&w=1200&q=80")',
-    textColor: "#ffffff",
-  },
-  rainy: {
-    image: 'url("https://images.unsplash.com/photo-1527766833261-b09c3163a791?auto=format&fit=crop&w=1200&q=80")',
-    textColor: "#ffffff",
-  },
-  snow: {
-    image: 'url("https://images.unsplash.com/photo-1483181957632-8bda9740b6f8?auto=format&fit=crop&w=1200&q=80")',
-    textColor: "#000000",
-  },
-};
+document.addEventListener("DOMContentLoaded", () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        fetchWeather(`${latitude},${longitude}`);
+      },
+      () => fetchWeather("Lagos") // fallback
+    );
+  } else {
+    fetchWeather("Lagos");
+  }
 
-// 🌐 Weather icon mapping (Weather Icons CDN)
-const iconMap = {
-  sunny: "wi-day-sunny",
-  clear: "wi-night-clear",
-  cloudy: "wi-cloudy",
-  "partly cloudy": "wi-day-cloudy",
-  rainy: "wi-rain",
-  snow: "wi-snow",
-};
+  updateTime();
+  setInterval(updateTime, 1000);
+});
 
-// 🌀 Show/Hide loader
-function showLoader() {
-  document.getElementById("loading").classList.remove("hidden");
-}
-function hideLoader() {
-  document.getElementById("loading").classList.add("hidden");
-}
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const city = input.value.trim();
+  if (city) {
+    fetchWeather(city);
+    input.value = "";
+  }
+});
 
-// ⏱ Live clock updater
 function updateTime() {
   const now = new Date();
-  document.getElementById("day").innerText = now.toLocaleDateString("en-US", {
-    weekday: "long",
-  });
-  document.getElementById("time").innerText = now.toLocaleTimeString();
-}
-updateTime();
-setInterval(updateTime, 1000);
-
-// 🔊 Sound based on weather
-function playWeatherSound(condition) {
-  const audio = new Audio();
-  if (condition.includes("rain")) {
-    audio.src = "sounds/rain.mp3";
-  } else if (condition.includes("thunder")) {
-    audio.src = "sounds/thunder.mp3";
-  } else if (condition.includes("snow")) {
-    audio.src = "sounds/snow.mp3";
-  } else {
-    return;
-  }
-  audio.loop = true;
-  audio.volume = 0.5;
-  audio.play();
+  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const day = now.toLocaleDateString(undefined, { weekday: 'long' });
+  document.getElementById("time").textContent = time;
+  document.getElementById("day").textContent = day;
 }
 
-// 🔄 Icon switcher
-function updateWeatherIcon(condition) {
-  const icon = document.getElementById("weather-icon");
-  icon.className = "wi text-white text-6xl";
-  for (const key in iconMap) {
-    if (condition.includes(key)) {
-      icon.classList.add(iconMap[key]);
-      break;
-    }
-  }
+function showLoader(show = true) {
+  loader.classList.toggle("hidden", !show);
 }
 
-// 🌤 Fetch weather
-async function fetchWeather(location) {
-  showLoader();
-  try {
-    const res = await fetch(`${BASE_URL}?key=${API_KEY}&q=${location}&days=4`);
-    const data = await res.json();
-
-    if (data && data.current) {
-      updateUI(data);
-    } else {
-      alert("Weather data not found. Try another location.");
-    }
-  } catch (err) {
-    console.error("Fetch error:", err);
-    alert("Failed to fetch weather. Check your internet or city name.");
-  } finally {
-    hideLoader();
-  }
-}
-
-// 🧠 Update UI
-function updateUI(data) {
-  const condition = data.current.condition.text.toLowerCase();
-
-  document.getElementById("temperature").textContent = `${data.current.temp_c}°C`;
-  document.getElementById("condition").innerText = data.current.condition.text;
-  document.getElementById("location").textContent = `${data.location.name}, ${data.location.region}`;
-
-  updateBackground(condition);
-  updateWeatherIcon(condition);
-  playWeatherSound(condition);
-
-  const forecast = data.forecast.forecastday;
-  for (let i = 1; i <= 4; i++) {
-    const day = forecast[i - 1];
-    document.getElementById(`forecast-temp${i}`).textContent = `${day.day.avgtemp_c}°C`;
-    document.getElementById(`forecast-condition${i}`).textContent = day.day.condition.text;
-
-    const date = new Date(day.date);
-    document.getElementById(`forecast-day${i}`).textContent = date.toLocaleDateString("en-US", {
-      weekday: "long",
+function fetchWeather(city) {
+  showLoader(true);
+  fetch(`${BASE_URL}?key=${API_KEY}&q=${city}&days=5&aqi=no&alerts=no`)
+    .then(res => {
+      if (!res.ok) throw new Error("City not found");
+      return res.json();
+    })
+    .then(data => {
+      updateWeather(data);
+      showLoader(false);
+    })
+    .catch(err => {
+      alert(err.message);
+      showLoader(false);
     });
+}
+
+function updateWeather(data) {
+  const current = data.current;
+  const location = data.location;
+  const forecast = data.forecast.forecastday;
+
+  // Current Weather
+  document.getElementById("temperature").textContent = `${current.temp_c}°C`;
+  document.getElementById("condition").textContent = current.condition.text;
+  document.getElementById("location").textContent = `${location.name}, ${location.country}`;
+  document.getElementById("weather-icon").className = `wi ${getWeatherIcon(current.condition.code, current.is_day)} text-6xl`;
+
+  // Forecast Days
+  for (let i = 1; i <= 4; i++) {
+    const dayData = forecast[i];
+    if (!dayData) continue;
+
+    document.getElementById(`forecast-day${i}`).textContent = new Date(dayData.date).toLocaleDateString(undefined, { weekday: 'short' });
+    document.getElementById(`forecast-temp${i}`).textContent = `${dayData.day.avgtemp_c}°C`;
+    document.getElementById(`forecast-condition${i}`).textContent = dayData.day.condition.text;
+  }
+
+  // Wind Compass Update 🌬️
+  updateWindCompass(current.wind_degree, current.wind_kph);
+
+  // Remove shimmer effect
+  document.querySelectorAll(".shimmer").forEach(el => el.classList.remove("shimmer"));
+}
+
+function updateWindCompass(degree, speed) {
+  const arrow = document.getElementById("wind-arrow");
+  const speedText = document.getElementById("wind-speed");
+  if (arrow && speedText) {
+    arrow.style.transform = `rotate(${degree}deg)`;
+    speedText.textContent = `${speed} km/h`;
   }
 }
 
-// 🎨 Background theme switcher
-function updateBackground(condition) {
-  weatherApp.style.backgroundImage = "";
-  weatherApp.style.backgroundColor = "#0f0c29";
-  weatherApp.style.color = "#ffffff";
+// Weather condition → WeatherIcons
+function getWeatherIcon(code, isDay) {
+  const map = {
+    1000: isDay ? "wi-day-sunny" : "wi-night-clear",
+    1003: isDay ? "wi-day-cloudy" : "wi-night-alt-cloudy",
+    1006: "wi-cloudy",
+    1009: "wi-cloudy-windy",
+    1030: "wi-fog",
+    1063: "wi-showers",
+    1066: "wi-snow",
+    1069: "wi-sleet",
+    1072: "wi-sleet",
+    1087: "wi-thunderstorm",
+    1114: "wi-snow-wind",
+    1117: "wi-snow-wind",
+    1135: "wi-fog",
+    1147: "wi-fog",
+    1150: "wi-sprinkle",
+    1153: "wi-sprinkle",
+    1168: "wi-rain-mix",
+    1171: "wi-rain-mix",
+    1180: "wi-showers",
+    1183: "wi-showers",
+    1186: "wi-rain",
+    1189: "wi-rain",
+    1192: "wi-rain",
+    1195: "wi-rain",
+    1198: "wi-hail",
+    1201: "wi-hail",
+    1204: "wi-sleet",
+    1207: "wi-sleet",
+    1210: "wi-snow",
+    1213: "wi-snow",
+    1216: "wi-snow",
+    1219: "wi-snow",
+    1222: "wi-snow",
+    1225: "wi-snow",
+    1237: "wi-hail",
+    1240: "wi-showers",
+    1243: "wi-rain",
+    1246: "wi-rain",
+    1249: "wi-sleet",
+    1252: "wi-sleet",
+    1255: "wi-snow",
+    1258: "wi-snow",
+    1261: "wi-hail",
+    1264: "wi-hail",
+    1273: "wi-storm-showers",
+    1276: "wi-thunderstorm",
+    1279: "wi-snow-thunderstorm",
+    1282: "wi-snow-thunderstorm"
+  };
 
-  for (const key in backgrounds) {
-    if (condition.includes(key)) {
-      const bg = backgrounds[key];
-      weatherApp.style.backgroundImage = bg.image;
-      weatherApp.style.backgroundSize = "cover";
-      weatherApp.style.backgroundPosition = "center";
-      weatherApp.style.backgroundRepeat = "no-repeat";
-      weatherApp.style.color = bg.textColor || "#ffffff";
-      break;
-    }
-  }
+  return map[code] || "wi-na";
 }
-
-// 🔍 Search handler
-const searchForm = document.getElementById("search-form");
-if (searchForm) {
-  searchForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const input = document.getElementById("search-input");
-    const location = input.value.trim();
-    if (location) {
-      fetchWeather(location);
-      input.value = "";
-    }
-  });
-}
-
-// 🚀 Load default
-fetchWeather("Lagos");
-
-// ✨ AOS Init
-AOS.init({
-  duration: 1000,
-  easing: "ease-out",
-  once: true,
-});
