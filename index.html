@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
@@ -8,98 +8,180 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- AOS CSS -->
+  <!-- AOS Animation CSS -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
 
   <!-- Weather Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
 
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1163/1163661.png" />
+
   <style>
     body {
       font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+      transition: background 0.5s ease, color 0.5s ease;
     }
 
     #weatherApp {
       min-height: 100vh;
-      transition: background 0.5s ease;
+      transition: background 0.6s ease-in-out;
     }
 
     .glass {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.5s ease;
     }
 
     #loading {
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(20px);
+    }
+
+    .shimmer {
+      animation: shimmer 1.5s infinite linear;
+      background: linear-gradient(to right, #333 4%, #555 25%, #333 36%);
+      background-size: 1000px 100%;
+      color: transparent !important;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    #weather-icon {
+      animation: floatUpDown 2.5s ease-in-out infinite;
+    }
+
+    @keyframes floatUpDown {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .forecast-card {
+      transition: transform 0.3s ease;
+    }
+
+    .forecast-card:hover {
+      transform: translateY(-6px) scale(1.02);
     }
   </style>
 </head>
-<body class="bg-black text-white">
-  <!-- Loader -->
-  <div id="loading" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-    <div class="text-white text-xl font-medium animate-pulse">Fetching weather data...</div>
+<body class="bg-black text-white transition-colors duration-500 relative">
+
+  <!-- 🌗 Dark/Light Toggle Button -->
+  <button id="modeToggle" class="fixed top-6 right-6 bg-white/10 hover:bg-white/20 p-3 rounded-full text-white shadow-lg z-50 transition duration-300">
+    <i class="wi wi-day-sunny text-xl"></i>
+  </button>
+
+  <!-- 🔄 Loader -->
+  <div id="loading" class="fixed inset-0 bg-black/60 flex items-center justify-center z-40 hidden">
+    <div class="text-white text-xl font-medium shimmer">Fetching weather data...</div>
   </div>
 
-  <!-- Weather App Container -->
-  <div id="weatherApp" class="p-6 md:p-12 transition-all duration-500">
-    <!-- Search Bar -->
-    <form id="search-form" class="flex justify-center gap-4 mb-8" data-aos="fade-down">
+  <!-- ☂️ Weather App -->
+  <div id="weatherApp" class="p-6 md:p-12">
+
+    <!-- 🔍 Search -->
+    <form id="search-form" class="flex justify-center gap-4 mb-10 flex-wrap" data-aos="fade-down">
       <input
         id="search-input"
         type="text"
         placeholder="Enter city..."
-        class="w-full max-w-sm px-4 py-2 rounded-lg border-none bg-white/10 text-white placeholder-white/60 focus:outline-none"
+        class="w-full sm:w-auto flex-grow px-4 py-2 rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none"
       />
       <button type="submit" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-medium">
         Search
       </button>
     </form>
 
-    <!-- Current Weather Card -->
-    <div class="glass rounded-xl p-6 max-w-4xl mx-auto shadow-lg" data-aos="zoom-in">
-      <div class="flex flex-col items-center text-center space-y-4">
-        <i id="weather-icon" class="wi text-white text-6xl mb-2"></i>
-        <h1 id="temperature" class="text-5xl font-bold">--°C</h1>
-        <p id="condition" class="text-xl opacity-90">--</p>
-        <p id="location" class="text-lg font-medium">--</p>
-        <p>
-          <span id="day" class="font-medium"></span> | <span id="time"></span>
-        </p>
-      </div>
+    <!-- ☁️ Current Weather Card -->
+    <div class="glass rounded-2xl p-6 max-w-4xl mx-auto shadow-xl text-center animate-fadeIn" data-aos="zoom-in">
+      <i id="weather-icon" class="wi text-white text-6xl mb-2"></i>
+      <h1 id="temperature" class="text-5xl font-bold shimmer">--°C</h1>
+      <p id="condition" class="text-xl opacity-90 shimmer">--</p>
+      <p id="location" class="text-lg font-medium shimmer">--</p>
+      <p><span id="day" class="font-medium"></span> | <span id="time"></span></p>
     </div>
 
-    <!-- Forecast Cards -->
+    <!-- 🧽 Wind Compass -->
+    <div class="glass mt-8 mx-auto max-w-md p-6 rounded-2xl shadow-xl text-center space-y-4" data-aos="fade-up">
+      <h2 class="text-xl font-semibold">Wind Direction</h2>
+      <div class="relative w-32 h-32 mx-auto">
+        <img src="https://cdn-icons-png.flaticon.com/512/54/54463.png" alt="Compass Base" class="absolute inset-0 w-full h-full opacity-30" />
+        <div id="wind-arrow" class="absolute inset-0 w-full h-full flex items-center justify-center transition-transform duration-700 ease-in-out">
+          <img src="https://cdn-icons-png.flaticon.com/512/189/189682.png" alt="Arrow" class="w-12 h-12" />
+        </div>
+      </div>
+      <p id="wind-speed" class="text-sm text-white/80">-- km/h</p>
+    </div>
+
+    <!-- 🗖️ Forecast Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-6xl mx-auto" data-aos="fade-up">
-      <!-- Day 1 -->
-      <div class="glass p-4 rounded-xl text-center space-y-2">
-        <h3 id="forecast-day1" class="text-lg font-semibold">Day 1</h3>
-        <p id="forecast-temp1" class="text-2xl font-bold">--°C</p>
-        <p id="forecast-condition1">--</p>
+      <div class="glass p-4 rounded-xl text-center space-y-2 forecast-card" data-aos="fade-up" data-aos-delay="100">
+        <h3 id="forecast-day1" class="text-lg font-semibold shimmer">Day 1</h3>
+        <p id="forecast-temp1" class="text-2xl font-bold shimmer">--°C</p>
+        <p id="forecast-condition1" class="shimmer">--</p>
       </div>
-      <!-- Day 2 -->
-      <div class="glass p-4 rounded-xl text-center space-y-2">
-        <h3 id="forecast-day2" class="text-lg font-semibold">Day 2</h3>
-        <p id="forecast-temp2" class="text-2xl font-bold">--°C</p>
-        <p id="forecast-condition2">--</p>
+      <div class="glass p-4 rounded-xl text-center space-y-2 forecast-card" data-aos="fade-up" data-aos-delay="200">
+        <h3 id="forecast-day2" class="text-lg font-semibold shimmer">Day 2</h3>
+        <p id="forecast-temp2" class="text-2xl font-bold shimmer">--°C</p>
+        <p id="forecast-condition2" class="shimmer">--</p>
       </div>
-      <!-- Day 3 -->
-      <div class="glass p-4 rounded-xl text-center space-y-2">
-        <h3 id="forecast-day3" class="text-lg font-semibold">Day 3</h3>
-        <p id="forecast-temp3" class="text-2xl font-bold">--°C</p>
-        <p id="forecast-condition3">--</p>
+      <div class="glass p-4 rounded-xl text-center space-y-2 forecast-card" data-aos="fade-up" data-aos-delay="300">
+        <h3 id="forecast-day3" class="text-lg font-semibold shimmer">Day 3</h3>
+        <p id="forecast-temp3" class="text-2xl font-bold shimmer">--°C</p>
+        <p id="forecast-condition3" class="shimmer">--</p>
       </div>
-      <!-- Day 4 -->
-      <div class="glass p-4 rounded-xl text-center space-y-2">
-        <h3 id="forecast-day4" class="text-lg font-semibold">Day 4</h3>
-        <p id="forecast-temp4" class="text-2xl font-bold">--°C</p>
-        <p id="forecast-condition4">--</p>
+      <div class="glass p-4 rounded-xl text-center space-y-2 forecast-card" data-aos="fade-up" data-aos-delay="400">
+        <h3 id="forecast-day4" class="text-lg font-semibold shimmer">Day 4</h3>
+        <p id="forecast-temp4" class="text-2xl font-bold shimmer">--°C</p>
+        <p id="forecast-condition4" class="shimmer">--</p>
       </div>
     </div>
   </div>
 
-  <!-- AOS JS -->
+  <!-- AOS Animation JS -->
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      once: true,
+      duration: 1000,
+      offset: 80,
+    });
+
+    // Toggle Dark/Light Mode
+    const modeToggle = document.getElementById("modeToggle");
+    const body = document.body;
+    let darkMode = true;
+
+    modeToggle.addEventListener("click", () => {
+      darkMode = !darkMode;
+      body.classList.toggle("bg-white", !darkMode);
+      body.classList.toggle("text-black", !darkMode);
+      body.classList.toggle("bg-black", darkMode);
+      body.classList.toggle("text-white", darkMode);
+      modeToggle.innerHTML = darkMode
+        ? '<i class="wi wi-day-sunny text-xl"></i>'
+        : '<i class="wi wi-night-clear text-xl"></i>';
+    });
+
+    // 🌬️ Wind Compass Rotation Function
+    function updateWindCompass(degree, speed) {
+      const arrow = document.getElementById('wind-arrow');
+      const speedText = document.getElementById('wind-speed');
+      if (arrow && speedText) {
+        arrow.style.transform = `rotate(${degree}deg)`;
+        speedText.textContent = `${speed} km/h`;
+      }
+    }
+  </script>
 
   <!-- Weather Script -->
   <script src="script.js"></script>
