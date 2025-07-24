@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Futuristic Weather App</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- AOS CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+
+  <!-- Weather Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    #weatherApp {
+      min-height: 100vh;
+      transition: background 0.5s ease;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #loading {
+      backdrop-filter: blur(10px);
+    }
+  </style>
+</head>
+<body class="bg-black text-white">
+  <!-- Loader -->
+  <div id="loading" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+    <div class="text-white text-xl font-medium animate-pulse">Fetching weather data...</div>
+  </div>
+
+  <!-- Weather App Container -->
+  <div id="weatherApp" class="p-6 md:p-12 transition-all duration-500">
+    <!-- Search Bar -->
+    <form id="search-form" class="flex justify-center gap-4 mb-8" data-aos="fade-down">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Enter city..."
+        class="w-full max-w-sm px-4 py-2 rounded-lg border-none bg-white/10 text-white placeholder-white/60 focus:outline-none"
+      />
+      <button type="submit" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-medium">
+        Search
+      </button>
+    </form>
+
+    <!-- Current Weather Card -->
+    <div class="glass rounded-xl p-6 max-w-4xl mx-auto shadow-lg" data-aos="zoom-in">
+      <div class="flex flex-col items-center text-center space-y-4">
+        <i id="weather-icon" class="wi text-white text-6xl mb-2"></i>
+        <h1 id="temperature" class="text-5xl font-bold">--°C</h1>
+        <p id="condition" class="text-xl opacity-90">--</p>
+        <p id="location" class="text-lg font-medium">--</p>
+        <p>
+          <span id="day" class="font-medium"></span> | <span id="time"></span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Forecast Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-6xl mx-auto" data-aos="fade-up">
+      <!-- Day 1 -->
+      <div class="glass p-4 rounded-xl text-center space-y-2">
+        <h3 id="forecast-day1" class="text-lg font-semibold">Day 1</h3>
+        <p id="forecast-temp1" class="text-2xl font-bold">--°C</p>
+        <p id="forecast-condition1">--</p>
+      </div>
+      <!-- Day 2 -->
+      <div class="glass p-4 rounded-xl text-center space-y-2">
+        <h3 id="forecast-day2" class="text-lg font-semibold">Day 2</h3>
+        <p id="forecast-temp2" class="text-2xl font-bold">--°C</p>
+        <p id="forecast-condition2">--</p>
+      </div>
+      <!-- Day 3 -->
+      <div class="glass p-4 rounded-xl text-center space-y-2">
+        <h3 id="forecast-day3" class="text-lg font-semibold">Day 3</h3>
+        <p id="forecast-temp3" class="text-2xl font-bold">--°C</p>
+        <p id="forecast-condition3">--</p>
+      </div>
+      <!-- Day 4 -->
+      <div class="glass p-4 rounded-xl text-center space-y-2">
+        <h3 id="forecast-day4" class="text-lg font-semibold">Day 4</h3>
+        <p id="forecast-temp4" class="text-2xl font-bold">--°C</p>
+        <p id="forecast-condition4">--</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <!-- Weather Script -->
+  <script src="script.js"></script>
+</body>
+</html>
